@@ -85,7 +85,7 @@ void mm_gpu(float* A, float* B, float* C, unsigned int M, unsigned int N, unsign
 	dim3 numThreadsPerBlock(128, 128);
 	dim3 numBlocks((N + numThreadsPerBlock.x - 1)/numThreadsPerBlock.x,
 	(M + numThreadsPerBlock.y - 1)/numThreadsPerBlock.y);
-	mm_kernel <<< numBlocks, numThreadsPerBlock >>> (A_d, B_d, C_d, M, N, K);
+	mm_tiled_kernel <<< numBlocks, numThreadsPerBlock >>> (A_d, B_d, C_d, M, N, K);
 
 
 
