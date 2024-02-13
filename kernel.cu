@@ -6,28 +6,31 @@
 #define TILE_DIM 32
 
 __global__ void mm_tiled_kernel(float* A, float* B, float* C, unsigned int M, unsigned int N, unsigned int K) {
-
     unsigned int row = blockIdx.y * blockDim.y + threadIdx.y;
     unsigned int col = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (row < M && col < N) {
-        
         __shared__ float A_s[TILE_DIM][TILE_DIM];
         __shared__ float B_s[TILE_DIM][TILE_DIM];
-		float sum = 0.0f;
+
+        float sum = 0.0f;
 
         // Iterate over tiles
         for (unsigned int tile = 0; tile < (K + TILE_DIM - 1) / TILE_DIM; ++tile) {
-		
             // Load tile from A and B into shared memory
-            if (row < M && tile * TILE_DIM + threadIdx.x < K) {
-                A_s[threadIdx.y][threadIdx.x] = A[row * K + tile * TILE_DIM + threadIdx.x];
+            unsigned int aRow = row;
+            unsigned int aCol = tile * TILE_DIM + threadIdx.x;
+            unsigned int bRow = tile * TILE_DIM + threadIdx.y;
+            unsigned int bCol = col;
+
+            if (aRow < M && aCol < K) {
+                A_s[threadIdx.y][threadIdx.x] = A[aRow * K + aCol];
             } else {
                 A_s[threadIdx.y][threadIdx.x] = 0.0f;
             }
 
-            if (col < N && tile * TILE_DIM + threadIdx.y < K) {
-                B_s[threadIdx.y][threadIdx.x] = B[(tile * TILE_DIM + threadIdx.y) * N + col];
+            if (bRow < K && bCol < N) {
+                B_s[threadIdx.y][threadIdx.x] = B[bRow * N + bCol];
             } else {
                 B_s[threadIdx.y][threadIdx.x] = 0.0f;
             }
